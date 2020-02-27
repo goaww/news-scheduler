@@ -6,8 +6,18 @@ services:
     image: postgres:12.2
     restart: always
     environment:
-      POSTGRES_PASSWORD: example
       POSTGRES_USER: scheduler
+      POSTGRES_PASSWORD: example
       POSTGRES_DB: news_source
     ports:
       - 5432:5432
+  rabbitmq:
+    image: 'bitnami/rabbitmq:3.8'
+    ports:
+      - '4369:4369'
+      - '5672:5672'
+      - '25672:25672'
+      - '15672:15672'
+    environment:
+      RABBITMQ_USERNAME: guest
+      RABBITMQ_PASSWORD: guest

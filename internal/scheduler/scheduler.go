@@ -1,33 +1,35 @@
 package scheduler
 
-import (
-	"fmt"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
-	"log"
-)
+import "log"
 
 func Handle() {
-	//load config
-	var config Conf
-	config.getConf()
+	conf := NewConf()
+	db := NewDB(*conf)
+	db.Connect()
+	defer db.Close()
+	service := NewUrlItemServiceImpl(db.Con)
 
-	db, err := connectDB(config)
+	mq := NewMqImpl(conf, "url_source")
+	err := mq.Connect()
 	if err == nil {
-		defer db.Close()
-		log.Println("connect database successful")
+		defer mq.Close()
+		for item := range service.Get() {
+			log.Println(item.V.(*Item).Url)
+			if item.E != nil {
 
-		err = db.AutoMigrate(UrlSource{}).Error
-		if err != nil {
-			log.Fatal("failed to migrate table todo")
+			} else {
+				failOnError(item.E, "error when get url item")
+			}
 		}
-
 	} else {
-		log.Fatal("Cannot connect DB: " + err.Error())
+		failOnError(err, "error when connect mq")
+
 	}
+
 }
-func connectDB(config Conf) (*gorm.DB, error) {
-	args := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable", config.DB.Host, config.DB.Port, config.DB.User, config.DB.DBName, config.DB.Password)
-	db, err := gorm.Open("postgres", args)
-	return db, err
+
+func failOnError(err error, msg string) {
+	if err != nil {
+		log.Fatalf("%s: %s", msg, err)
+	}
 }

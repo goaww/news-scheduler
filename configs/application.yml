@@ -4,3 +4,8 @@ db:
   user: scheduler
   password: example
   dbname: news_source
+msg:
+  host: localhost
+  port: 5672
+  user: guest
+  password: guest
