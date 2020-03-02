@@ -1,9 +1,11 @@
 package scheduler
 
-import "log"
+import (
+	"log"
+)
 
 type Scheduler interface {
-	Handle() error
+	Execute(string)
 }
 type SchImpl struct {
 	Conf    *Conf
@@ -14,10 +16,19 @@ func NewSchImpl(conf *Conf, encoder *EncodeService) *SchImpl {
 	return &SchImpl{Conf: conf, Encoder: encoder}
 }
 
-func (s *SchImpl) Handle() error {
+func (s *SchImpl) Execute(string) {
+	err := s.handle()
+	if err != nil {
+		failOnError(err, "cannot execute scheduler")
+	} else {
+		log.Println("completed")
+	}
+}
+
+func (s *SchImpl) handle() error {
 	service := NewUrlItemServiceImpl(s.Conf)
 
-	mq := NewMq(s.Conf, "url_source")
+	mq := NewMq(s.Conf, "url_item")
 	err := mq.Connect()
 	if err == nil {
 		defer mq.Close()
@@ -45,12 +56,7 @@ func (s *SchImpl) Handle() error {
 
 func Handle() {
 	impl := NewSchImpl(NewConf(), NewJsonEncoder())
-	err := impl.Handle()
-	if err != nil {
-		failOnError(err, "cannot execute scheduler")
-	} else {
-		log.Println("completed")
-	}
+	impl.Execute("")
 }
 
 func failOnError(err error, msg string) {

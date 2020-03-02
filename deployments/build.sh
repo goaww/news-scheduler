@@ -1,0 +1,1 @@
+go build -o scheduler cmd/scheduler/main.go  && go build -o sourcer cmd/sourcer/main.go
