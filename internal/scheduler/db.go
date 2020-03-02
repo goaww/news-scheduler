@@ -4,36 +4,35 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
-	"log"
 )
 
-type DB struct {
-	Config Conf
-	Con    *gorm.DB
+type DB interface {
+	Connect() (*gorm.DB, error)
+}
+type DBImpl struct {
+	Config *Conf
 }
 
-func NewDB(config Conf) *DB {
-	return &DB{Config: config}
+func NewDB(config *Conf) *DB {
+	var impl DB
+	impl = &DBImpl{Config: config}
+	return &impl
 }
 
-func (d *DB) Connect() {
+func (d *DBImpl) Connect() (*gorm.DB, error) {
 	db, err := connectDB(d.Config)
 	if err == nil {
-		log.Println("connect database successful")
-
 		err = db.AutoMigrate(UrlItem{}).Error
 		if err != nil {
-			log.Fatal("failed to migrate table todo")
+			return nil, err
+		} else {
+			return db, nil
 		}
-		d.Con = db
 	} else {
-		log.Fatal("Cannot connect DB: " + err.Error())
+		return nil, err
 	}
 }
-func (d *DB) Close() {
-	_ = d.Con.Close()
-}
-func connectDB(config Conf) (*gorm.DB, error) {
+func connectDB(config *Conf) (*gorm.DB, error) {
 	args := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable", config.DB.Host, config.DB.Port, config.DB.User, config.DB.DBName, config.DB.Password)
 	db, err := gorm.Open("postgres", args)
 	return db, err

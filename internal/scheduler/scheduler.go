@@ -2,34 +2,55 @@ package scheduler
 
 import "log"
 
-func Handle() {
-	conf := NewConf()
-	db := NewDB(*conf)
-	db.Connect()
-	defer db.Close()
-	service := NewUrlItemServiceImpl(db.Con)
+type Scheduler interface {
+	Handle() error
+}
+type SchImpl struct {
+	Conf    *Conf
+	Encoder *EncodeService
+}
 
-	mq := NewMqImpl(conf, "url_source")
+func NewSchImpl(conf *Conf, encoder *EncodeService) *SchImpl {
+	return &SchImpl{Conf: conf, Encoder: encoder}
+}
+
+func (s *SchImpl) Handle() error {
+	service := NewUrlItemServiceImpl(s.Conf)
+
+	mq := NewMq(s.Conf, "url_source")
 	err := mq.Connect()
 	if err == nil {
 		defer mq.Close()
 		for item := range service.Get() {
 			if item.E == nil {
-				url := item.V.(*Item).Url
-				log.Println("Send:", url)
-				err := mq.Send(url)
+				item := item.V.(*Item)
+				msg, err := (*s.Encoder).Encode(item)
 				if err != nil {
-					failOnError(err, "error when send message")
+					return err
+				} else {
+					err := mq.Send(msg)
+					if err != nil {
+						return err
+					}
 				}
 			} else {
-				failOnError(item.E, "error when get url item")
+				return err
 			}
 		}
 	} else {
-		failOnError(err, "error when connect mq")
-
+		return err
 	}
-	log.Println("Completed")
+	return nil
+}
+
+func Handle() {
+	impl := NewSchImpl(NewConf(), NewJsonEncoder())
+	err := impl.Handle()
+	if err != nil {
+		failOnError(err, "cannot execute scheduler")
+	} else {
+		log.Println("completed")
+	}
 }
 
 func failOnError(err error, msg string) {

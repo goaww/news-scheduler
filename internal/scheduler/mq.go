@@ -20,7 +20,7 @@ type MqImpl struct {
 	Q    *amqp.Queue
 }
 
-func NewMqImpl(config *Conf, name string) *MqImpl {
+func NewMq(config *Conf, name string) *MqImpl {
 	return &MqImpl{Config: config, name: name}
 }
 

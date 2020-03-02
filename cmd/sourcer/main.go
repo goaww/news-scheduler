@@ -18,19 +18,13 @@ func main() {
 }
 
 func insertUrl(s *string) {
-	db := scheduler.NewDB(*scheduler.NewConf())
-	db.Connect()
-	defer db.Close()
-	service := scheduler.NewUrlItemServiceImpl(db.Con)
+	service := scheduler.NewUrlItemServiceImpl(scheduler.NewConf())
 	service.Add(*scheduler.NewItem(s))
 	log.Println("insert url successful", *s)
 }
 
 func getUrl() {
-	db := scheduler.NewDB(*scheduler.NewConf())
-	db.Connect()
-	defer db.Close()
-	service := scheduler.NewUrlItemServiceImpl(db.Con)
+	service := scheduler.NewUrlItemServiceImpl(scheduler.NewConf())
 	for item := range service.Get() {
 		log.Println(item.V.(*scheduler.Item).Url)
 	}
