@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"github.com/robfig/cron/v3"
 	"log"
 )
 
@@ -16,13 +17,19 @@ func NewSchImpl(conf *Conf, encoder *EncodeService) *SchImpl {
 	return &SchImpl{Conf: conf, Encoder: encoder}
 }
 
-func (s *SchImpl) Execute(string) {
-	err := s.handle()
-	if err != nil {
-		failOnError(err, "cannot execute scheduler")
-	} else {
-		log.Println("completed")
-	}
+func (s *SchImpl) Execute(cronStr string) {
+	cron := cron.New(cron.WithParser(cron.secondParser))
+	cron.Start()
+	defer cron.Stop()
+	cron.AddFunc(cronStr, func() {
+		err := s.handle()
+		if err != nil {
+			failOnError(err, "cannot execute scheduler")
+		} else {
+			log.Println("completed")
+		}
+	})
+
 }
 
 func (s *SchImpl) handle() error {
@@ -56,7 +63,7 @@ func (s *SchImpl) handle() error {
 
 func Handle() {
 	impl := NewSchImpl(NewConf(), NewJsonEncoder())
-	impl.Execute("")
+	impl.Execute("* * * * * ?")
 }
 
 func failOnError(err error, msg string) {
