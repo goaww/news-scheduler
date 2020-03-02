@@ -18,7 +18,7 @@ func NewSchImpl(conf *Conf, encoder *EncodeService) *SchImpl {
 }
 
 func (s *SchImpl) Execute(cronStr string) {
-	cron := cron.New(cron.WithParser(cron.secondParser))
+	cron := cron.New(cron.WithParser(cron.NewParser(cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.DowOptional | cron.Descriptor)))
 	cron.Start()
 	defer cron.Stop()
 	cron.AddFunc(cronStr, func() {
