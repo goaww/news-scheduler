@@ -23,7 +23,7 @@ func insertUrl(s *string) {
 	defer db.Close()
 	service := scheduler.NewUrlItemServiceImpl(db.Con)
 	service.Add(*scheduler.NewItem(s))
-	log.Println("insert url successful", s)
+	log.Println("insert url successful", *s)
 }
 
 func getUrl() {

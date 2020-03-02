@@ -12,12 +12,12 @@ services:
     ports:
       - 5432:5432
   rabbitmq:
-    image: 'bitnami/rabbitmq:3.8'
+    image: bitnami/rabbitmq:3.8
     ports:
-      - '4369:4369'
-      - '5672:5672'
-      - '25672:25672'
-      - '15672:15672'
+      - 4369:4369
+      - 5672:5672
+      - 25672:25672
+      - 15672:15672
     environment:
-      RABBITMQ_USERNAME: guest
-      RABBITMQ_PASSWORD: guest
+      RABBITMQ_USERNAME: ad
+      RABBITMQ_PASSWORD: pw

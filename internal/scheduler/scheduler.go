@@ -14,9 +14,13 @@ func Handle() {
 	if err == nil {
 		defer mq.Close()
 		for item := range service.Get() {
-			log.Println(item.V.(*Item).Url)
-			if item.E != nil {
-
+			if item.E == nil {
+				url := item.V.(*Item).Url
+				log.Println("Send:", url)
+				err := mq.Send(url)
+				if err != nil {
+					failOnError(err, "error when send message")
+				}
 			} else {
 				failOnError(item.E, "error when get url item")
 			}
@@ -25,7 +29,7 @@ func Handle() {
 		failOnError(err, "error when connect mq")
 
 	}
-
+	log.Println("Completed")
 }
 
 func failOnError(err error, msg string) {
