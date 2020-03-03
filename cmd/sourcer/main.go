@@ -18,13 +18,15 @@ func main() {
 }
 
 func insertUrl(s *string) {
-	service := scheduler.NewUrlItemServiceImpl(scheduler.NewConf())
+	var service scheduler.SourceService
+	service = *scheduler.NewSourceService(scheduler.NewConf())
 	service.Add(*scheduler.NewItem(s))
 	log.Println("insert url successful", *s)
 }
 
 func getUrl() {
-	service := scheduler.NewUrlItemServiceImpl(scheduler.NewConf())
+	var service scheduler.SourceService
+	service = *scheduler.NewSourceService(scheduler.NewConf())
 	for item := range service.Get() {
 		log.Println(item.V.(*scheduler.Item).Url)
 	}
