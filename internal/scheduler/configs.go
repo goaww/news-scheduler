@@ -21,6 +21,9 @@ type Conf struct {
 		User     string `yaml:"user"`
 		Password string `yaml:"password"`
 	}
+	SDL struct {
+		Cron string `yaml:"cron"`
+	}
 }
 
 func NewConf() *Conf {

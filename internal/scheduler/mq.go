@@ -20,8 +20,10 @@ type MqImpl struct {
 	Q    *amqp.Queue
 }
 
-func NewMq(config *Conf, name string) *MqImpl {
-	return &MqImpl{Config: config, name: name}
+func NewMq(config *Conf, name string) *Mq {
+	var mq Mq
+	mq = &MqImpl{Config: config, name: name}
+	return &mq
 }
 
 func (m *MqImpl) Connect() error {

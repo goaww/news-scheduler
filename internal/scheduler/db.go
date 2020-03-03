@@ -9,17 +9,17 @@ import (
 type DB interface {
 	Connect() (*gorm.DB, error)
 }
-type DBImpl struct {
+type dBImpl struct {
 	Config *Conf
 }
 
 func NewDB(config *Conf) *DB {
 	var impl DB
-	impl = &DBImpl{Config: config}
+	impl = &dBImpl{Config: config}
 	return &impl
 }
 
-func (d *DBImpl) Connect() (*gorm.DB, error) {
+func (d *dBImpl) Connect() (*gorm.DB, error) {
 	db, err := connectDB(d.Config)
 	if err == nil {
 		err = db.AutoMigrate(UrlItem{}).Error

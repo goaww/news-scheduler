@@ -3,67 +3,51 @@ package scheduler
 import (
 	"github.com/robfig/cron/v3"
 	"log"
+	"os"
+	"os/signal"
 )
 
 type Scheduler interface {
-	Execute(string)
+	Run(func())
 }
-type SchImpl struct {
-	Conf    *Conf
-	Encoder *EncodeService
-}
-
-func NewSchImpl(conf *Conf, encoder *EncodeService) *SchImpl {
-	return &SchImpl{Conf: conf, Encoder: encoder}
+type schedulerImpl struct {
+	cronExpr string
 }
 
-func (s *SchImpl) Execute(cronStr string) {
-	cron := cron.New(cron.WithParser(cron.NewParser(cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.DowOptional | cron.Descriptor)))
-	cron.Start()
-	defer cron.Stop()
-	cron.AddFunc(cronStr, func() {
-		err := s.handle()
-		if err != nil {
-			failOnError(err, "cannot execute scheduler")
-		} else {
-			log.Println("completed")
-		}
-	})
-
-}
-
-func (s *SchImpl) handle() error {
-	service := NewUrlItemServiceImpl(s.Conf)
-
-	mq := NewMq(s.Conf, "url_item")
-	err := mq.Connect()
-	if err == nil {
-		defer mq.Close()
-		for item := range service.Get() {
-			if item.E == nil {
-				item := item.V.(*Item)
-				msg, err := (*s.Encoder).Encode(item)
-				if err != nil {
-					return err
-				} else {
-					err := mq.Send(msg)
-					if err != nil {
-						return err
-					}
-				}
-			} else {
-				return err
-			}
-		}
-	} else {
-		return err
+func (s *schedulerImpl) Run(f func()) {
+	c := cron.New(cron.WithSeconds())
+	addFunc, err := c.AddFunc(s.cronExpr, f)
+	if err != nil {
+		failOnError(err, "cannot create scheduler job")
 	}
-	return nil
+	log.Println("add scheduler function successful", addFunc)
+	c.Start()
+	defer c.Stop()
+
+	sig := make(chan os.Signal)
+	signal.Notify(sig, os.Interrupt, os.Kill)
+	<-sig
+}
+
+func NewScheduler(cronExpr string) *Scheduler {
+	var s Scheduler
+	s = &schedulerImpl{cronExpr: cronExpr}
+	return &s
 }
 
 func Handle() {
-	impl := NewSchImpl(NewConf(), NewJsonEncoder())
-	impl.Execute("* * * * * ?")
+	conf := NewConf()
+
+	var s Scheduler
+	s = *NewScheduler(conf.SDL.Cron)
+	var p Publisher
+
+	p = *NewPublisher(conf, NewJsonEncoder())
+	s.Run(func() {
+		err := p.Publish()
+		failOnError(err, "cannot publish message")
+	})
+
 }
 
 func failOnError(err error, msg string) {

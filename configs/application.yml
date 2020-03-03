@@ -9,3 +9,5 @@ msg:
   port: 5672
   user: ad
   password: pw
+sdl:
+  cron: '0/30 * * * * ?'

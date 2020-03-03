@@ -5,29 +5,23 @@ import (
 	"github.com/reactivex/rxgo/v2"
 )
 
-type UrlItemService interface {
+type SourceService interface {
 	Add(Item) error
 
 	Get() <-chan rxgo.Item
 }
 
-type Item struct {
-	Url string
-}
-
-func NewItem(url *string) *Item {
-	return &Item{Url: *url}
-}
-
-type UrlItemServiceImpl struct {
+type sourceServiceImpl struct {
 	Config *Conf
 }
 
-func NewUrlItemServiceImpl(config *Conf) *UrlItemServiceImpl {
-	return &UrlItemServiceImpl{Config: config}
+func NewSourceService(config *Conf) *SourceService {
+	var s SourceService
+	s = &sourceServiceImpl{Config: config}
+	return &s
 }
 
-func (s *UrlItemServiceImpl) Add(source Item) error {
+func (s *sourceServiceImpl) Add(source Item) error {
 	db := *NewDB(s.Config)
 	conn, err := db.Connect()
 	if err != nil {
@@ -41,7 +35,7 @@ func (s *UrlItemServiceImpl) Add(source Item) error {
 	}
 }
 
-func (s *UrlItemServiceImpl) Get() <-chan rxgo.Item {
+func (s *sourceServiceImpl) Get() <-chan rxgo.Item {
 	db := *NewDB(s.Config)
 	conn, err := db.Connect()
 	if err != nil {
